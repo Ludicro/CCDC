@@ -3,91 +3,104 @@ Meg's Notes:
 	Add it to any2any rule
 	Then proceed with following instructions
 
-Firewall Initial Setup (CLI):
+# Firewall Initial Setup (CLI)
 
 1. Turn off Management Interface Temporarily
-	> configure
+   	~~~
+ 	> configure
 	set device config system permitted-ip 127.0.0.1
 	
 	commit
-	
-2. Turn off Data External Interface Temporarily - Red Team could manage our FW via data interface
-	> configure
+	~~~
+3. Turn off Data External Interface Temporarily - Red Team could manage our FW via data interface
+	~~~
+ 	> configure
 	#set network interface ethernet ethernet1/1 link-state down
 	
 	#commit
-	
-3. Delete create new admin user and delete all other accounts
+	~~~
+4. Delete create new admin user and delete all other accounts
+	````
 	> configure
 	#set mgt-config users <name> password
 	#set mgt-confg users <name> permission role-based superuser yes
 	#commit
 	#exit
-	
+	````
 	Log into new user then:
+	````
 	> configure
 	# show mgt-config users
 	# delete mgt-config users <name>
 	# commit
+	````	
 	
-	(Possibly set up ssh key, discuss with team)	https://docs.paloaltonetworks.com/pan-os/10-1/pan-os-admin/firewall-administration/manage-firewall-administrators/configure-administrative-accounts-and-authentication/configure-ssh-key-based-administrator-authentication-to-the-cli
+	Setting up SSH Key: https://docs.paloaltonetworks.com/pan-os/10-1/pan-os-admin/firewall-administration/manage-firewall-administrators/configure-administrative-accounts-and-authentication/configure-ssh-key-based-administrator-authentication-to-the-cli
 
-4. Review System Info
+5. Review System Info
+   	````
 	> show system info
 	(default will be dhcp client, will need to turn off dhcp before configuring a static address)
-	#set deviceconfig system type
-	(will allow dropdown selection)
+    	> configure
+	#set deviceconfig system type _____
+	(hitting tab will allow dropdown selection)
 	#set deviceconfig system type static
 	#commit
-
-5. Only allow secure protocols to connect - ssh, https, ping(for troubleshooting)
-	> show system services
+	````
+7. Only allow secure protocols to connect - ssh, https, ping(for troubleshooting)
+	````
+ 	> show system services
+ 	> configure
 	#set deviceconfig system service disable-[service](hit tab after the "-" to see list) no
 	#commit
-	
-6. Show all Admin Accounts
-	> show admins all
+	````
+8. Show all Admin Accounts
+	````
+ 	> show admins all
 	>configure
 	#delete mgt-config users [account]
 	#commit
- 
-7. Turn Data Interface Back On
-	> configure
+ 	````
+9. Turn Data Interface Back On
+	````
+ 	> configure
 	#set network interface ethernet ethernet1/1 link-state up
 	
 	#commit
-	
-8. Turn on Management Interface 
-	> configure
+	````
+10. Turn on Management Interface 
+	````
+ 	> configure
 	#set device config system permitted-ip x.x.x.x
 	
 	#commit
-	(should now be able to access web-ui)
-	
+	(should now be able to access web-ui again)
+	````
 Meg's Notes:	
 	Configure Profiles
+ 
+ 	
 	>configure
-	#set network profiles interface-management-profile <name> ping yes
-		(ping is interchangeable to others like https but i usually only do allow_ping and allow_https)
+	#set network profiles interface-management-profile <name> [service] yes
+		([service should be changed to allow_ping and allow_https, hit TAB to view options)
 		(I recommend making the names like allow_ping)
 	#set network interface ethernet ethernet1/4 layer 3 interface-management-profile <name>
 		(1/4 is interchangeable for 1/1, 1/2, 1/3)
-	#set device system service disable <name> yes
-		(http, and all the ones you don't want allowed)
-(These instructions differ from the steps given by Palo on Step 5, line 38-41)
-
-
-9. Backup FW Config 
-	>scp export configuration to user@ip:/path/here from running-config.xml
 	
-10. Revoke all login sessions
+9. Backup FW Config
+   	````
+	>scp export configuration to user@ip:/path/here from running-config.xml
+	````
+
+11. Revoke all login sessions
+	````
 	>delete admin-sessions
+	````
 
 
+# Setting Up Firewall (WebUI)
 
-Setting Up Firewall (WebUI)
-
-1. Licensing FW - Didn't work at invitational
+1. Licensing FW - Didn't work at invitational so may not need to do this, but it is good to try this anyway
 	Go to Device tab
 	On the left, scroll down to Licenses
 	Retrieve License Keys
@@ -120,29 +133,29 @@ Setting Up Firewall (WebUI)
 
 7. Creating Anti-Spyware Profiles (Meg's Notes show some specifics)
 	Enable Following Rules:
-		Name					Threat Name		Severity 		Action 		Packet Capture
-		simple-critical			any 			critical		reset-both  enable
-		simple-high				any 			high			reset-both  enable
-		simple-medium			any 			medium			reset-both  enable
-		simple-informational	any 			informational	reset-both  enable
-		simple-low				any 			low 			reset-both  enable
+		Name			Threat Name	Severity 	Action 		Packet Capture
+		simple-critical		any 		critical	reset-both  	enable
+		simple-high		any 		high		reset-both  	enable
+		simple-medium		any 		medium		reset-both  	enable
+		simple-informational	any 		informational	reset-both  	enable
+		simple-low		any 		low 		reset-both  	enable
 	Set DNS Security policy to sinkhole
 		Consider setting up sinkhole server to capture intel on Red team or use loopback address as sinkhole
 
 8. Creating Vulnerability Protection Profiles (Meg's Notes show some specifics)
 	Enable Following:
-		Name						Threat Name		Severity 		Action 		Packet Capture
-		simple-client-critical		any 			critical		reset-both  enable
-		simple-client-high			any 			high			reset-both  enable
-		simple-client-medium		any 			critical		reset-both  enable
-		simple-client-informational	any 			critical		reset-both  enable
-		simple-client-low			any 			critical		reset-both  enable
-		simple-server-critical		any 			critical		reset-both  enable
-		simple-server-high			any 			high			reset-both  enable
-		simple-server-medium		any 			critical		reset-both  enable
-		simple-server-informational	any 			critical		reset-both  enable
-		simple-server-low			any 			critical		reset-both  enable
-9. Creating URL Filtering Profiles (Meg's Notes don't have specifics, but her block has 3 more than my list)
+		Name				Threat Name	Severity 	Action 		Packet Capture
+		simple-client-critical		any 		critical	reset-both  	enable
+		simple-client-high		any 		high		reset-both  	enable
+		simple-client-medium		any 		critical	reset-both 	enable
+		simple-client-informational	any 		critical	reset-both  	enable
+		simple-client-low		any 		critical	reset-both  	enable
+		simple-server-critical		any 		critical	reset-both  	enable
+		simple-server-high		any 		high		reset-both  	enable
+		simple-server-medium		any 		critical	reset-both  	enable
+		simple-server-informational	any 		critical	reset-both  	enable
+		simple-server-low		any 		critical	reset-both  	enable
+9. Creating URL Filtering Profiles (Meg's Notes don't have specifics, but her block has 3 more than my list so try to get anything that could be unsafe)
 	1. Block the following categories:
 		Command and control
 		Grayware
@@ -233,46 +246,59 @@ Setting Up Firewall (WebUI)
 	
 18. Setup Login Banner:
 	Device -> Management -> General Settings Gear Icon
-	"
 	WARNING: This system is for the user of authorized clients only. Individuals using the computer network system without authorization, or in excess of their authorization, are subject to having all of their activity on this computer network system monitored and recorded by system personnel. To protect the computer network system from unauthorized usage and to ensure the computer network systems are functioning properly, system administrators monitor this system. Anyone using this system expressly consents to such monitoring and is advised that if this monitoring reveals possible conduct of criminal activity, system personnel may provide the evidence of such activity to law enforcement officers. 
 
 	Access is restricted to authorized users only. Unauthorized access is a violation of state and federal, civil and criminal laws. 
-	"
 	
 19. Check for New Updates:
 	Device -> Scroll on left down to Software -> Click Check Now
 	(the lab said to not update software but that might have been for their lab only, not CCDC)
 
-Meg's Notes:	
-Nat Rules
-	No source translation, only destination
-	External source to external destination 
-	Internal source to destination translation
-	Any for incoming 
-	Dest = external IP of service 
-	Service for application = port
-	Destination translation = external to internal
+# Nat Rules
 
-Security Rules (In GUI): 
-	Service = Port 
-	Zone = Zone of Asset
-	Each section of the rules works as an “and” together and within each section it is an “or”
-		Internet Access
-			Internal to External
-			Source: Internal
-			Dest: External
-			Source address: Internal 
-			Application: Any
-			Service: Any
-		Box General Controls (One Rule for Each Line Under Application)
-		Source: “External” “Any”
-		Destination: “Zone” “Public”
-		Application: 
-			Fedora: SMTP/Pop3 - Webmail
-			Splunk: ssl/web-browsing
-			CentOS: web-browsing - ecomm
-			Debian: DNS
-			2012 AD/DNS: DNS
+No source translation, only destination
+External source to external destination 
+Internal source to destination translation
+Any for incoming 
+Dest = external IP of service 
+Service for application = port
+Destination translation = external to internal
+
+Creating NAT/Security Policy:
+NAT - defines how IPs are translated, has nothing to do with connections
+NAT:
+1. What is the ORIGINAL source address of computers initiating the connection?
+2. What zone is that address in?
+3. What is my ORIGINAL destination address?
+4. What zone is that address, or collection of addresses in?
+Security:
+1. What is the ORIGINAL source address of computers initiating the connection?
+2. What zone is that address in?
+3. What is my ORIGINAL destination address?
+4. What zone will the packet FINALLY come to rest in?\
+Don't use bi-directional as it will mess up configuration, better to manually create the rules and combine for back and forth traffic
+
+#  Security Rules (In GUI): 
+```
+Service = Port
+Zone = Zone of Asset
+Each section of the rules works as an “and” together and within each section it is an “or”
+	Internet Access
+		Internal to External
+		Source: Internal
+		Dest: External
+		Source address: Internal 
+		Application: Any
+		Service: Any
+	Box General Controls (One Rule for Each Line Under Application)
+	Source: “External” “Any”
+	Destination: “Zone” “Public”
+	Application: 
+		Fedora: SMTP/Pop3 - Webmail
+		Splunk: ssl/web-browsing
+		CentOS: web-browsing - ecomm
+		Debian: DNS
+		2012 AD/DNS: DNS
 		Service: (all are listed here, not just the ones for the box general controls. Use the ones that go with each application in each corresponding rule ie. 110 and 25 for SMTP and pop3 on the fedora box)
 			Splunk: 8000 - TCP
 			DNS: 53 - UDP
@@ -287,26 +313,29 @@ Security Rules (In GUI):
 			2 rules, one for the application and one for the port. Need two because of how the “and” and “or” works with the rules
 			“Any” “any” “deny” - ssh in application
 			“Any” “any” “deny” - ssh in service
+```
 
+# Setting Password Policy:
+```
+Min Length: 			10
+Min Uppercase: 			1
+Min Lowercase: 			1
+Min Numeric Characters: 	1
+Min Special Characters: 	1
 
-Setting Password Policy:
-	Min Length: 				 	 10
-	Min Uppercase: 					 1
-	Min Lowercase: 					 1
-	Min Numeric Characters: 		 1
-	Min Special Characters: 		 1
+Prevent Password Reuse Limit: 	3
+Required Password Change Period: 90 days
+```
 	
-	Prevent Password Reuse Limit: 	 3
-	Required Password Change Period: 90 days
-	
-	
-Sys Log Server Profile Splunk:
-	Syslog Server Profile
-		Servers
-			Name	Syslog Server	Transport	Port	Format	Facility
-			splunk	172.20.241.20	TCP			514		BSD		LOG_USER
-
-Additional Notes:
+# Sys Log Server Profile Splunk:
+```
+Syslog Server Profile
+	Servers
+		Name	Syslog Server	Transport	Port	Format	Facility
+		splunk	172.20.241.20	TCP			514		BSD		LOG_USER
+```
+# Additional Notes:
+```
 Terms:
 	Universal:
 		local can talk to remote/local
@@ -317,36 +346,19 @@ Terms:
 	Interzone:
 		local can talk to remote
 		remote can talk to local
+```
 
+# Useful tips:
+## Application Filter:
+Set "groups" of applications that can be denied or allowed all at once as a rule.
+	Included filtering subcatgory, technology used, and risk factor
 
-Useful tips:
-	Application Filter:
-		Set "groups" of applications that can be denied or allowed all at once as a rule.
-			Included filtering subcatgory, technology used, and risk factor
+## Create custom security profiles
+When creating, can set up for various categories, assign actions, do extended packet capture, and capture DNS sinkholes\
+	DNS Sinkholes: Will identify if a connection is going to a malicious source, will then change the IP that is actually sent out, ruining command and control and will allow for hostile detection on hosts. (Change to IP that is NOT actually used on network) then enable Passive DNS monitoring.
 
-	Create custom security profiles
-		When creating, can set up for various categories, assign actions, do extended packet capture, and capture DNS sinkholes
-			DNS Sinkholes: Will identify if a connection is going to a malicious source, will then change the IP that is actually sent out, ruining command and control and will allow for hostile detection on hosts. (Change to IP that is NOT actually used on network) then enable Passive DNS monitoring.
-
-
-
-Creating NAT/Security Policy:
-NAT - defines how IPs are translated, has nothing to do with connections
-	NAT:
-		1. What is the ORIGINAL source address of computers initiating the connection?
-		2. What zone is that address in?
-		3. What is my ORIGINAL destination address?
-		4. What zone is that address, or collection of addresses in?
-	Security:
-		1. What is the ORIGINAL source address of computers initiating the connection?
-		2. What zone is that address in?
-		3. What is my ORIGINAL destination address?
-		4. What zone will the packet FINALLY come to rest in?
-Don't use bi-directional
-	Will mess up configuration, better to manually create the rules and combine for back and forth traffic
-	
-	
-Importing/Exporting Configuration Files:
+ 
+# Importing/Exporting Configuration Files:
 	Exporting:
 		save config to <config_file_name>
 		scp export configuration from <config_file_name> to <username@host:path>
